@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_site.css') }}">
+    <meta charset="UTF-8">
+    <title>Welcome!</title>
+</head>
+<body>
+    <form method="post" action="{{ url_for('process_name') }}">
+        <table style="width: 80%; margin: 0 auto; margin-top: 15px">
+                <tr>
+                    <td style="font-weight: bold"><label for="name"> Enter Your Name: </label></td>
+                </tr>
+                <tr>
+                    <td><input name="name" id="name" required></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><input type="submit" value="Submit"></td>
+                </tr>
+                <tr>
+                    <td>(Field cannot be left blank)</td>
+                </tr>
+        </table>
+    </form>
+</body>
+</html>
