@@ -28,3 +28,20 @@ p{
 tr{
     text-align: center;
 }
+table{
+    width: 100%;
+}
+td,th{
+    padding: 8px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+}
+table tr td:nth-child(1) {
+    width: 10%;
+}
+table tr td:nth-child(2) {
+    width: 20%;
+}
+table tr td:nth-child(3) {
+    width: 15%;
+}

@@ -1,11 +1,13 @@
-import flask
-from flask import render_template, request, redirect, url_for
-from datetime import datetime
-app = flask.Flask(__name__)
 """
 Flask App for Lab 6 - CYOP 300
 Written by Rob Culbertson
 """
+
+from datetime import datetime
+import flask
+from flask import render_template, request, redirect, url_for
+
+app = flask.Flask(__name__)
 @app.route('/')
 def index():
     """
@@ -31,7 +33,8 @@ def process_name():
     """
     if request.method == 'POST':
         name=request.form['name'].strip()
-        return redirect(url_for('dog', name=name)) #Redirects the url to the dynamic entry of the user
+        # Redirects the url to the dynamic entry of the user
+        return redirect(url_for('dog', name=name))
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
