@@ -6,6 +6,7 @@
     <title>Please Log In</title>
 </head>
 <body>
+<p style="color: red"> User not found, please try again or register below. </p>
     <form method="post" action="{{ url_for('login') }}">
         <table style="width: 80%; margin: 0 auto; margin-top: 15px">
                 <tr>
@@ -25,7 +26,7 @@
                 </tr>
         </table>
     </form>
-    <form method="get" action="{{ url_for('registration') }}">
+    <form method="post" action="{{ url_for('registration') }}">
         <table style="width: 80%; margin: 0 auto; margin-top: 15px">
                 <tr>
                     <td style="font-weight: bold"> If you're new here please register below:</td>

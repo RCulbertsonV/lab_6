@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_site.css') }}">
+    <meta charset="UTF-8">
+    <title>Register Now!</title>
+</head>
+<body>
+    <form method="post" action="{{ url_for('registration') }}">
+       <table style="width: 80%; margin: 0 auto; margin-top: 15px">
+           <tr style="font-weight: bold">
+                <td> <label for="username"> Select a Username: </label></td>
+           </tr>
+           <tr>
+                <td> <input name="username" id="username" required> </td>
+           </tr>
+            <tr style="font-weight: bold">
+                <td> <label for="password"> Password: </label> </td>
+            </tr>
+           <tr>
+                <td> <input name="password" id="password" type="password" required> </td>
+           </tr>
+           <tr>
+               <td colspan="2"> <input type="submit" value="Register"> </td>
+           </tr>
+       </table>
+    </form>
+</body>
+</html>
