@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 import flask, passlib
 from flask import render_template, request, redirect, url_for
+from matplotlib.style.core import update_nested_dict
 from passlib.hash import sha256_crypt
 
 app = flask.Flask(__name__)
@@ -98,6 +99,28 @@ def registration():
         return render_template('re_register_password_complexity.html', error='Password does not meet complexity requirements')
     #If the method is not a post request -> just render the registration page
     return render_template('register.html')
+@app.route('/update', methods=['GET', 'POST'])
+def update_password():
+    """
+    Updates the user password and saves credentials to file.
+    """
+    if request.method == 'POST':
+        old_password = request.form['old_password']
+        updated_password = request.form['updated_password']
+        pass_confirm = request.form['password_confirm']
+
+        with open('users.txt', 'r') as file:
+            try:
+                for line in file:
+                    line = line.strip()
+                    if not line:
+                        continue
+                try:
+                    stored_username, stored_password = ast.literal_eval(line)
+                    if sha256_crypt.verify(old_password, stored_password) and pass_confirm == updated_password:
+                        with open('users.txt', 'a') as f:
+
+# def pass_processing():
 def pass_check(password):
     """Checks to ensure minimum security requirements for password"""
     if len(password) < 12:
