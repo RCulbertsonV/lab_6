@@ -1,1 +1,2 @@
-[2025-08-05 13:17:44] Failed login for user: 'BadUser' from IP: 127.0.0.1
+[2025-08-05 14:09:16] Failed login for user: 'TestUser' from IP: 127.0.0.1
+[2025-08-05 14:10:39] Failed login for user: 'wrongUser' from IP: 127.0.0.1

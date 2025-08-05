@@ -102,7 +102,7 @@ def update_password():
 
         # Check if the user exists
         if username not in users:
-            return render_template('user_not_found.html')
+            return render_template('update_error.html', error='Username not found')
 
         # Verify the old password and confirm the new one
         if not sha256_crypt.verify(old_password, users[username]):
@@ -113,7 +113,7 @@ def update_password():
         # Check if the new password meets complexity and NIST requirements
         is_valid, message = pass_check(updated_password)
         if not is_valid:
-            return render_template('re_register_password_complexity.html', error=message)
+            return render_template('update_error.html', error=message)
 
         # Hash the new password and update the dictionary
         new_pass_hash = sha256_crypt.hash(updated_password)
