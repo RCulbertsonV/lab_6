@@ -31,5 +31,15 @@
                 <tr style="text-align: center "> <td style="padding-top: 75px"> Golden Retrievers </td> <td><p><img src="{{ url_for('static', filename='golden.jpg') }}" alt="Golden" height="120px" width="120px"/></p></td> <td style="padding-top: 75px"><a href="https://en.wikipedia.org/wiki/Golden_Retriever"> Click here for more Goldens! </a></td></tr>
                 <tr style="text-align: center "> <td style="padding-top: 75px"> Shibas </td> <td><p><img src="{{ url_for('static', filename='shiba.jpg') }}" alt="Shiba" height="120px" width="120px"/></p></td> <td style="padding-top: 75px"> <a href="https://en.wikipedia.org/wiki/Shiba_Inu"> Click here for more Shibas! </a></td></tr>
             </table>
+            <form method="get" action="{{ url_for('update_password') }}">
+                <table style="width: 80%; margin: 0 auto; margin-top: 15px">
+                <tr>
+                    <td style="font-weight: bold"> Update Password:</td>
+                </tr>
+                <tr>
+                    <td colspan="2"> <input type="submit" value="Update"></td>
+                </tr>
+                </table>
+            </form>
                 <p style="text-align: center"> If you are interested in helping out cute dogs in need please <a href="https://www.aspca.org/">click here for more information!</a></p>
 </body>
