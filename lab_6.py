@@ -109,18 +109,42 @@ def update_password():
         updated_password = request.form['updated_password']
         pass_confirm = request.form['password_confirm']
 
+        # Confirm that the updated password meets requirements
+
+        # Read in the file
         with open('users.txt', 'r') as file:
             try:
+                # For each line in the file
                 for line in file:
+                    # Strip the line
                     line = line.strip()
                     if not line:
                         continue
-                try:
-                    stored_username, stored_password = ast.literal_eval(line)
-                    if sha256_crypt.verify(old_password, stored_password) and pass_confirm == updated_password:
-                        with open('users.txt', 'a') as f:
+                    try:
+                        stored_username, stored_password = ast.literal_eval(line)
+                        if sha256_crypt.verify(old_password, stored_password) and pass_confirm == updated_password:
+                            user_writing(stored_username, updated_password)
+                    except (ValueError, SyntaxError) as e:
+                        print("Warning: Error encountered", e)
+            except FileNotFoundError:
+                print("User Data File Not Found")
+            except IOError as e:
+                print(f"Error reading from file {e}")
+    # If the method is not POST - render the webpage
+    return render_template('update_password.html')
+def user_writing(username, updated_pass):
+    with open('users.txt', 'w') as file:
+        for line in file:
+            reference_user, reference_pass = ast.literal_eval(line)
+            # If we find the line where the username matches, re-write the updated password in
+            if reference_user == username:
+                new_tuple = (username, updated_pass)
+            # If not, re-submit the old values to the tuple and continue
+            else:
+                new_tuple = (reference_user, updated_pass)
+            # Write the tuple to the file line
+            file.write(str(new_tuple) + '\n')
 
-# def pass_processing():
 def pass_check(password):
     """Checks to ensure minimum security requirements for password"""
     if len(password) < 12:
@@ -133,8 +157,22 @@ def pass_check(password):
         return False, "Password must contain at least one number."
     if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?`~]", password):
         return False, "Password must contain at least one special character."
-
+    if not nist(password):
+        return False, "Selected password is too common, please select a different password."
     return True, "Password meets requirements"
+def nist(password):
+    """
+    Checks the given password against the commonly used password document provided
+    :param password: password for comparison
+    :return: boolean response on if the password passes the nist requirements.
+    """
+    with open('CommonPassword.txt', 'r') as file:
+        common_passwords = {line.strip() for line in file}
+        if password.strip() in common_passwords:
+            return False
+        else:
+            return True
+
 
 if __name__ == '__main__':
     app.run()
