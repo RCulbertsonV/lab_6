@@ -4,14 +4,16 @@ Revised and appended for Lab 7 - CYOP 300
 Written by Rob Culbertson
 """
 import ast
+import os
 import re
 from datetime import datetime
-import flask, passlib
+import flask
 from flask import render_template, request, redirect, url_for
-from matplotlib.style.core import update_nested_dict
 from passlib.hash import sha256_crypt
 
 app = flask.Flask(__name__)
+
+# --- Routes ---
 @app.route('/')
 def index():
     """
@@ -28,37 +30,31 @@ def dog(name):
     fm_now = now.strftime("%H:%M:%S")
     fm_now_date = now.strftime("%d/%m/%Y")
     name_up = name.capitalize()
-    return render_template('dog.html', name=name_up, time = fm_now, date=fm_now_date)
-
-@app.route('/login', methods=['GET','POST'])
+    return render_template('dog.html', name=name_up, time=fm_now, date=fm_now_date)
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     """
     This processes the form submission and redirects to a dynamic URL
     """
     if request.method == 'POST':
-        username=request.form['Username'].strip()
-        password=request.form['password'].strip()
-        pass_hash = sha256_crypt.hash(password)
+        # Use .get() to prevent crashing on missing form fields
+        username = request.form.get('Username', '').strip()
+        password = request.form.get('password', '').strip()
 
-        with open('users.txt', 'r') as file:
-            try:
-                for line in file:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        stored_username, stored_hash_pass = ast.literal_eval(line)
-                        if username == stored_username or username.lower() == stored_username.lower():
-                            if sha256_crypt.verify(password, stored_hash_pass):
-                                    return render_template('dog.html', name=username)
-                            return render_template('login_error.html')
-                        return render_template('user_not_found.html')
-                    except (ValueError, SyntaxError) as e:
-                        print("Warning: Error encountered", e)
-            except FileNotFoundError:
-                print("User Data File Not Found")
-            except IOError as e:
-                print(f"Error reading from file {e}")
+        users = load_users()
+
+        # Check if the username exists in our loaded data
+        if username not in users:
+            log_failed_attempt(username)
+            return render_template('user_not_found.html')
+
+        # Verify the password against the stored hash
+        stored_hash_pass = users[username]
+        if sha256_crypt.verify(password, stored_hash_pass):
+            return render_template('dog.html', name=username)
+        else:
+            log_failed_attempt(username)
+            return render_template('login_error.html')
     return redirect(url_for('index'))
 @app.route('/register', methods=['GET', 'POST'])
 def registration():
@@ -66,85 +62,69 @@ def registration():
     Registers the user and saves credentials to file.
     """
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if pass_check(password):
-            pass_hash = sha256_crypt.hash(password)
-            user_data = (username, pass_hash)
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
 
-            with open('users.txt', 'r') as file:
-                # Rejects duplicate usernames
-                try:
-                    for line in file:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            #Converting the string tuple back into a python tuple for evaluation
-                            stored_username, stored_hash_pass = ast.literal_eval(line)
+        # Check if the password meets complexity and NIST requirements
+        is_valid, message = pass_check(password)
+        if not is_valid:
+            return render_template('re_register_password_complexity.html', error=message)
 
-                            #non case-sensitive username
-                            if username == stored_username or username.lower() == stored_username.lower():
-                                return render_template('re_register_username.html', error='Username already registered')
-                        except (ValueError, SyntaxError) as e:
-                            print("Warning: Error encountered", e)
-                except FileNotFoundError:
-                    print("User Data File Not Found")
-                except IOError as e:
-                    print(f"Error reading from file {e}")
-                with open('users.txt', 'a') as file:
-                    file.write(str(user_data) + '\n')
-                    return redirect(url_for('index'))
-        # If the password that was input does not meet the requirements - user will need to re-register using the appropriate error page redirect.
-        return render_template('re_register_password_complexity.html', error='Password does not meet complexity requirements')
-    #If the method is not a post request -> just render the registration page
+        # Load all users to check for a duplicate username
+        users = load_users()
+        if username.lower() in (u.lower() for u in users.keys()):
+            return render_template('re_register_username.html', error='Username already registered')
+
+        # If all checks pass, hash the password and save the new user
+        pass_hash = sha256_crypt.hash(password)
+        users[username] = pass_hash
+        save_users(users)
+
+        return redirect(url_for('index'))
+
     return render_template('register.html')
+
+
 @app.route('/update', methods=['GET', 'POST'])
 def update_password():
     """
     Updates the user password and saves credentials to file.
     """
     if request.method == 'POST':
-        old_password = request.form['old_password']
-        updated_password = request.form['updated_password']
-        pass_confirm = request.form['password_confirm']
+        username = request.form.get('username', '').strip()
+        old_password = request.form.get('old_password', '').strip()
+        updated_password = request.form.get('new_password', '').strip()
+        pass_confirm = request.form.get('password_confirm', '').strip()
 
-        # Confirm that the updated password meets requirements
+        # Load all users from the file
+        users = load_users()
 
-        # Read in the file
-        with open('users.txt', 'r') as file:
-            try:
-                # For each line in the file
-                for line in file:
-                    # Strip the line
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        stored_username, stored_password = ast.literal_eval(line)
-                        if sha256_crypt.verify(old_password, stored_password) and pass_confirm == updated_password:
-                            user_writing(stored_username, updated_password)
-                    except (ValueError, SyntaxError) as e:
-                        print("Warning: Error encountered", e)
-            except FileNotFoundError:
-                print("User Data File Not Found")
-            except IOError as e:
-                print(f"Error reading from file {e}")
-    # If the method is not POST - render the webpage
+        # Check if the user exists
+        if username not in users:
+            return render_template('user_not_found.html')
+
+        # Verify the old password and confirm the new one
+        if not sha256_crypt.verify(old_password, users[username]):
+            return render_template('update_error.html', error="Incorrect old password.")
+        if updated_password != pass_confirm:
+            return render_template('update_error.html', error="New passwords do not match.")
+
+        # Check if the new password meets complexity and NIST requirements
+        is_valid, message = pass_check(updated_password)
+        if not is_valid:
+            return render_template('re_register_password_complexity.html', error=message)
+
+        # Hash the new password and update the dictionary
+        new_pass_hash = sha256_crypt.hash(updated_password)
+        users[username] = new_pass_hash
+
+        # Save the updated data back to the file
+        save_users(users)
+
+        return render_template('update_success.html')
+
     return render_template('update_password.html')
-def user_writing(username, updated_pass):
-    with open('users.txt', 'w') as file:
-        for line in file:
-            reference_user, reference_pass = ast.literal_eval(line)
-            # If we find the line where the username matches, re-write the updated password in
-            if reference_user == username:
-                new_tuple = (username, updated_pass)
-            # If not, re-submit the old values to the tuple and continue
-            else:
-                new_tuple = (reference_user, updated_pass)
-            # Write the tuple to the file line
-            file.write(str(new_tuple) + '\n')
-
+# --- Helper Functions ---
 def pass_check(password):
     """Checks to ensure minimum security requirements for password"""
     if len(password) < 12:
@@ -173,6 +153,56 @@ def nist(password):
         else:
             return True
 
+def log_failed_attempt(username: str):
+    """
+    Logs a failed login attempt to a file.
+    Includes timestamp, username, and remote IP address.
+    """
+    log_file_path = "failed_logins.log"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Get the remote IP address of the client
+    ip_address = request.remote_addr if request.remote_addr else "UNKNOWN_IP"
+
+    log_entry = f"[{timestamp}] Failed login for user: '{username}' from IP: {ip_address}\n"
+
+    try:
+        with open(log_file_path, "a") as log_file:
+            log_file.write(log_entry)
+    except IOError as e:
+        print(f"Error writing to log file {log_file_path}: {e}")
+
+# --- File I/O Functions ---
+def load_users(file_path='users.txt'):
+    """
+    Reads user data from the text file.
+    Returns a dictionary mapping usernames to hashed passwords.
+    Returns an empty dictionary if the file does not exist.
+    """
+    users = {}
+    if not os.path.exists(file_path):
+        return users
+
+    with open(file_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                username, pass_hash = ast.literal_eval(line)
+                users[username] = pass_hash
+            except (ValueError, SyntaxError) as e:
+                print(f"Warning: Malformed line in users.txt: {line} - Error: {e}")
+    return users
+
+def save_users(users, file_path='users.txt'):
+    """
+    Saves the user data from a dictionary back to the text file.
+    This function overwrites the entire file.
+    """
+    with open(file_path, 'w') as file:
+        for username, pass_hash in users.items():
+            user_tuple = (username, pass_hash)
+            file.write(str(user_tuple) + '\n')
 
 if __name__ == '__main__':
     app.run()

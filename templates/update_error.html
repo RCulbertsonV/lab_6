@@ -6,6 +6,12 @@
     <title>Register Now!</title>
 </head>
 <body>
+    {% if error %}
+
+    <p style="color: red"> {{ error }} </p>
+
+    {% endif %}
+    <p style="color: red"> Please Try Again </p>
     <form method="post" action="{{ url_for('update_password') }}">
        <table style="width: 80%; margin: 0 auto; margin-top: 15px">
            <tr style="font-weight: bold">

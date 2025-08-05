@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_site.css') }}">
+    <meta charset="UTF-8">
+    <title>Success!</title>
+
+</head>
+<body>
+  <h1> Success! Password Has Been Updated </h1>
+  <h2> Please click here to return to the login screen: </h2>
+  <form method="get" action="{{ url_for('index') }}">
+      <table>
+          <tr>
+              <td>
+                 <input style="column-span: 2; text-align: center" type="submit" value="Login">
+              </td>
+          </tr>
+      </table>
+  </form>
+</body>
+</html>
